@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 
 # Setup the Flask-JWT-Extended extension
-app.config["JWT_SECRET_KEY"] = "mega-super-secret-key"  #IDC if you are seeing thins...
+app.config["JWT_SECRET_KEY"] = "g8@)#Eh?AufQv#Z@#(76*gsd,s`,z"  #IDC if you are seeing thins...
 jwt = JWTManager(app)
 
 @app.route("/login", methods=["POST"])
