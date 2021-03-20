@@ -26,7 +26,17 @@ def fetch_from_database(query : str) -> tuple:
         logging.error("Failed to fetch the database "+str(ex))
         return  None
 
-def commit_to_database(query : str, values : tuple):
+def fetch_from_database_values(query : str, values : tuple) -> tuple:
+    try:
+        cursor.execute(query, values)
+        result = cursor.fetchall()
+        logging.debug("Succusfuly fetched data from the database")
+        return result
+    except Exception as ex:
+        logging.error("Failed to fetch the database "+str(ex))
+        return  None
+
+def commit_to_database_values(query : str, values : tuple):
     try:
         cursor.execute(query, values)
         mydb.commit()
