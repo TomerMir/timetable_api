@@ -53,3 +53,12 @@ def commit_to_database(query : str):
 
     except Exception as ex:
         logging.error("Failed to commit to the database "+str(ex))
+
+if __name__ == "__main__":
+    db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", ("tomer",))
+    db_result = list(db_result[0])[3:]
+    print(len(db_result))
+    print(db_result)
+    
+
+            
