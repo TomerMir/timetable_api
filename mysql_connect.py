@@ -1,35 +1,25 @@
 import mysql.connector
 import logging
 
-mydb = None
-cursor = None
+try:
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="MirmoDB2004",
+        database="timetable_database"
+    )
+    logging.info("Connected to database")
+    cursor = mydb.cursor()
+    logging.debug("Got cursor")
 
-def connect_to_database():
-    try:
-        mydb = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="MirmoDB2004",
-            database="timetable_database"
-        )
-        logging.info("Connected to database")
-        cursor = mydb.cursor()
-        logging.debug("Got cursor")
-
-    except:
-        logging.critical("Failed to connect to the database")
-        exit()
-
-connect_to_database()
-
-def ping_database():
-    if(not mydb.is_connected()):
-        connect_to_database()
+except:
+    logging.critical("Failed to connect to the database")
+    exit()
 
 
 def fetch_from_database(query : str) -> tuple:
     try:
-        ping_database()
+        mydb.ping(reconnect=True, attempts=1, delay=0)
         cursor.execute(query)
         result = cursor.fetchall()
         logging.debug("Succusfuly fetched data from the database")
@@ -40,7 +30,7 @@ def fetch_from_database(query : str) -> tuple:
 
 def fetch_from_database_values(query : str, values : tuple) -> tuple:
     try:
-        ping_database()
+        mydb.ping(reconnect=True, attempts=1, delay=0)
         cursor.execute(query, values)
         result = cursor.fetchall()
         logging.debug("Succusfuly fetched data from the database")
@@ -51,7 +41,7 @@ def fetch_from_database_values(query : str, values : tuple) -> tuple:
 
 def commit_to_database_values(query : str, values : tuple):
     try:
-        ping_database()
+        mydb.ping(reconnect=True, attempts=1, delay=0)
         cursor.execute(query, values)
         mydb.commit()
         logging.debug("Succusfuly commited to the database")
@@ -61,7 +51,7 @@ def commit_to_database_values(query : str, values : tuple):
 
 def commit_to_database(query : str):
     try:
-        ping_database()
+        mydb.ping(reconnect=True, attempts=1, delay=0)
         cursor.execute(query)
         mydb.commit()
         logging.debug("Succusfuly commited to the database")
