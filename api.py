@@ -156,4 +156,4 @@ def delete_user():
     except Exception:
         return jsonify(status=False, err="Server error")
 if __name__ == "__main__":
-    app.run(host= '0.0.0.0', port=5000, debug=True)
+    app.run(host= '0.0.0.0', port=5000, debug=False)
