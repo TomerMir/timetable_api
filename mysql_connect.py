@@ -5,7 +5,7 @@ try:
     mydb = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="*ErF9BvlQ-t08st:<hg,*M94-i3hGQ",
+        password="MirmoDB2004",
         database="timetable_database"
     )
     logging.info("Connected to database")
@@ -16,8 +16,10 @@ except:
     logging.critical("Failed to connect to the database")
     exit()
 
+
 def fetch_from_database(query : str) -> tuple:
     try:
+        mydb.ping(reconnect=True, attempts=1, delay=0)
         cursor.execute(query)
         result = cursor.fetchall()
         logging.debug("Succusfuly fetched data from the database")
@@ -28,6 +30,7 @@ def fetch_from_database(query : str) -> tuple:
 
 def fetch_from_database_values(query : str, values : tuple) -> tuple:
     try:
+        mydb.ping(reconnect=True, attempts=1, delay=0)
         cursor.execute(query, values)
         result = cursor.fetchall()
         logging.debug("Succusfuly fetched data from the database")
@@ -38,6 +41,7 @@ def fetch_from_database_values(query : str, values : tuple) -> tuple:
 
 def commit_to_database_values(query : str, values : tuple):
     try:
+        mydb.ping(reconnect=True, attempts=1, delay=0)
         cursor.execute(query, values)
         mydb.commit()
         logging.debug("Succusfuly commited to the database")
@@ -47,6 +51,7 @@ def commit_to_database_values(query : str, values : tuple):
 
 def commit_to_database(query : str):
     try:
+        mydb.ping(reconnect=True, attempts=1, delay=0)
         cursor.execute(query)
         mydb.commit()
         logging.debug("Succusfuly commited to the database")
