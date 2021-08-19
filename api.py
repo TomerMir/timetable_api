@@ -1,5 +1,5 @@
-
 from flask import Flask, jsonify, request
+import flask
 from mysql_connect import *
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager, verify_jwt_in_request
 from flask_cors import CORS
@@ -23,8 +23,10 @@ def login():
     db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s AND password_hash=%s;", (username, password))
     if len(db_result) == 0:
         return jsonify(status=False)
-
-    access_token = create_access_token(identity=username)
+    admin = False
+    if db_result[0][-1] == 1:
+        admin = True
+    access_token = create_access_token(identity=username, additional_claims={"admin" : admin}) 
     return jsonify(status=True, exp=15, token=access_token)
 
 @app.route("/api/register", methods=["POST"])
@@ -62,9 +64,10 @@ def get_table():
         username = get_jwt_identity()
         db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (username,))
         db_result = list(db_result[0])[3:]
+        del db_result[-1]
         return jsonify(status=True, data=db_result)
     except Exception:
-        return jsonify(status=False)
+        return jsonify(status=False, err="Server error")
 
 @app.route("/api/changetable", methods=["POST"])
 @jwt_required()
@@ -73,7 +76,6 @@ def edit_table():
         username = get_jwt_identity()
         new_data = request.json.get("data")
         query = "UPDATE users SET "
-        index = 0
         for i in range(1, 7):
             for j in range(1,13):
                 tmp = str(i)+'_'+str(j)
@@ -90,5 +92,67 @@ def edit_table():
     except Exception:
         return jsonify(status=False)
 
+def verify_admin(username):
+    db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (username,))
+    return db_result[0][-1] == 1
+    
+@app.route("/api/getusers", methods=["GET"])
+@jwt_required()
+def get_users():
+    try:
+        username = get_jwt_identity()
+        if not verify_admin(username):
+            return jsonify(status=False, err="You are not an admin")
+
+        db_result = fetch_from_database("SELECT username, is_admin FROM users;")
+        return jsonify(status=True, data=db_result, your_user=username)
+
+    except Exception:
+        return jsonify(status=False, err="Server error")
+
+
+@app.route("/api/changeadmin", methods=["POST"])
+@jwt_required()
+def change_admin():
+    try:
+        username = get_jwt_identity()
+        if not verify_admin(username):
+            return jsonify(status=False, err="You are not an admin")
+        user_to_change = request.json.get("username")
+        if user_to_change == username:
+            return jsonify(status=False, err="You can't change your own role")
+        db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (user_to_change,))
+        if len(db_result) == 0:
+            return jsonify(status=False, err="Username does not exist")
+        if db_result[0][-1] == 1:
+            commit_to_database_values("UPDATE users SET is_admin=%s WHERE username=%s;", (None, user_to_change))
+        else:
+            commit_to_database_values("UPDATE users SET is_admin=%s WHERE username=%s;", (1, user_to_change))
+        ##### If there is an error here maybe its because that the "1" isnt string its an int... idk
+
+        return jsonify(status=True)
+
+    except Exception:
+        return jsonify(status=False, err="Server error")
+
+@app.route("/api/deleteuser", methods=["POST"])
+@jwt_required()
+def delete_user():
+    try:
+        username = get_jwt_identity()
+        if not verify_admin(username):
+            return jsonify(status=False, err="You are not an admin")
+        user_to_change = request.json.get("username")
+        if user_to_change == username:
+            return jsonify(status=False, err="You can't delete your own user")
+        db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (user_to_change,))
+        if len(db_result) == 0:
+            return jsonify(status=False, err="Username does not exist")
+
+        commit_to_database_values("DELETE FROM users WHERE username=%s;", (user_to_change,))
+        return jsonify(status=True)    
+
+    except Exception:
+        return jsonify(status=False, err="Server error")
 if __name__ == "__main__":
     app.run(host= '0.0.0.0', port=5000, debug=False)
