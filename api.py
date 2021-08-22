@@ -1,4 +1,3 @@
-
 from flask import Flask, jsonify, request
 import flask
 from mysql_connect import *
@@ -24,9 +23,7 @@ def login():
     db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s AND password_hash=%s;", (username, password))
     if len(db_result) == 0:
         return jsonify(status=False)
-    admin = False
-    if db_result[0][-1] == 1:
-        admin = True
+    admin = db_result[0][-1] == 1
     access_token = create_access_token(identity=username, additional_claims={"admin" : admin}) 
     return jsonify(status=True, exp=15, token=access_token)
 
@@ -156,4 +153,4 @@ def delete_user():
     except Exception:
         return jsonify(status=False, err="Server error")
 if __name__ == "__main__":
-    app.run(host= '0.0.0.0', port=5000, debug=False)
+    app.run(host= '0.0.0.0', port=5000, debug=True)
