@@ -24,10 +24,10 @@ logging.root.handlers = []
 logging.basicConfig(filename="timetable_api.log",
                             format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                             datefmt='"%Y-%m-%d %H:%M:%S"',
-                            level=logging.DEBUG)
+                            level=logging.INFO)
 
 console = logging.StreamHandler(sys.stdout)
-console.setLevel(logging.INFO)
+console.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
 console.setFormatter(formatter)
 logging.getLogger('').addHandler(console)
