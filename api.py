@@ -5,6 +5,7 @@ from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_requir
 from flask_cors import CORS
 import logging
 from waitress import serve
+import sys
 import argparse
 
 #Setup flask app and CORS (Cross-origin resource sharing)
@@ -18,8 +19,19 @@ jwt = JWTManager(app)
 #Setup the servers loggers
 werkzeugLogger = logging.getLogger('werkzeug')
 werkzeugLogger.setLevel(logging.ERROR)
-waitressLogger = logging.getLogger('waitress')
-waitressLogger.setLevel(logging.INFO)
+
+logging.root.handlers = []
+logging.basicConfig(filename="timetable_api.log",
+                            format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                            datefmt='"%Y-%m-%d %H:%M:%S"',
+                            level=logging.DEBUG)
+
+console = logging.StreamHandler(sys.stdout)
+console.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+console.setFormatter(formatter)
+logging.getLogger('').addHandler(console)
+logger = logging
 
 #Login
 @app.route("/api/login", methods=["POST"])
@@ -27,8 +39,7 @@ def login():
     username = request.json.get("username")
     password = request.json.get("password")
     
-    app.logger.info("New login request from "+username)
-
+    logger.info("New login request from "+username)
     db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s AND password_hash=%s;", (username, password))
     if len(db_result) == 0:
         return jsonify(status=False)
@@ -42,7 +53,7 @@ def register():
     username = request.json.get("username")
     password = request.json.get("password")
 
-    app.logger.info("New register request for "+username) 
+    logger.info("New register request for "+username) 
     
     db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (username,))
     if db_result != None and len(db_result) > 0: 
@@ -75,7 +86,7 @@ def expired_token_callback(jwt_header, jwt_payload):
 def get_table():
     try:
         username = get_jwt_identity()
-        app.logger.info("Get table request from "+ username) 
+        logger.info("Get table request from "+ username) 
         db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (username,))
         db_result = list(db_result[0])[3:]
         del db_result[-1]
@@ -89,7 +100,7 @@ def get_table():
 def edit_table():
     try:
         username = get_jwt_identity()
-        app.logger.info("Change table request from "+ username) 
+        logger.info("Change table request from "+ username) 
         new_data = request.json.get("data")
         query = "UPDATE users SET "
         for i in range(1, 7):
@@ -119,7 +130,7 @@ def verify_admin(username):
 def get_users():
     try:
         username = get_jwt_identity()
-        app.logger.info("Get users request from "+ username) 
+        logger.info("Get users request from "+ username) 
         if not verify_admin(username):
             return jsonify(status=False, err="You are not an admin")
 
@@ -138,7 +149,7 @@ def change_admin():
         if not verify_admin(username):
             return jsonify(status=False, err="You are not an admin")
         user_to_change = request.json.get("username")
-        app.logger.info("%s changed %s's role" % (username, user_to_change)) 
+        logger.info("%s changed %s's role" % (username, user_to_change)) 
         if user_to_change == username:
             return jsonify(status=False, err="You can't change your own role")
         db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (user_to_change,))
@@ -165,7 +176,7 @@ def delete_user():
         if not verify_admin(username):
             return jsonify(status=False, err="You are not an admin")
         user_to_change = request.json.get("username")
-        app.logger.info("%s deleted %s's account" % (username, user_to_change)) 
+        logger.info("%s deleted %s's account" % (username, user_to_change)) 
         if user_to_change == username:
             return jsonify(status=False, err="You can't delete your own user")
         db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (user_to_change,))
@@ -185,5 +196,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.debug == 1:
         app.run(host= '0.0.0.0', port=5000, debug=True)
+        logger = app.logger
     else:
         serve(app, host='0.0.0.0', port=5000)
