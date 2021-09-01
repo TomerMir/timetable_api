@@ -7,6 +7,7 @@ import logging
 from waitress import serve
 import sys
 import argparse
+import datetime
 
 #Setup flask app and CORS (Cross-origin resource sharing)
 app = Flask(__name__)
@@ -39,13 +40,20 @@ def login():
     try:
         username = request.json.get("username")
         password = request.json.get("password")
-        
+        stayLoggedIn = request.json.get("stayLoggedIn")
+
         logger.info("New login request from "+username)
         db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s AND password_hash=%s;", (username, password))
         if len(db_result) == 0:
             return jsonify(status=False, err="Incorrect username or password")
         admin = db_result[0][-1] == 1
-        access_token = create_access_token(identity=username, additional_claims={"admin" : admin}) 
+        if stayLoggedIn:
+            expires = datetime.timedelta(days=365)
+            access_token = create_access_token(identity=username, additional_claims={"admin" : admin}, expires_delta=expires)
+            return jsonify(status=True, exp=525600, token=access_token)
+
+        expires = datetime.timedelta(minutes=15)
+        access_token = create_access_token(identity=username, additional_claims={"admin" : admin}, expires_delta=expires) 
         return jsonify(status=True, exp=15, token=access_token)
 
     except Exception as e:
@@ -172,7 +180,6 @@ def change_admin():
             commit_to_database_values("UPDATE users SET is_admin=%s WHERE username=%s;", (None, user_to_change))
         else:
             commit_to_database_values("UPDATE users SET is_admin=%s WHERE username=%s;", (1, user_to_change))
-        ##### If there is an error here maybe its because that the "1" isnt string its an int... idk
 
         return jsonify(status=True)
 
@@ -207,10 +214,10 @@ def delete_user():
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Timetable api server")
-    parser.add_argument("debug", help="""1 for debug mode. 0 for production mode""",nargs='?', const=1, type=int, default=0)
+    parser.add_argument("debug", help="""1 for debug mode. 0 or none for production mode""",nargs='?', const=1, type=int, default=0)
     args = parser.parse_args()
     if args.debug == 1:
-        app.run(host= '0.0.0.0', port=5000, debug=True)
         logger = app.logger
+        app.run(host= '0.0.0.0', port=5000, debug=True)
     else:
         serve(app, host='0.0.0.0', port=5000)
