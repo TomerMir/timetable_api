@@ -142,3 +142,6 @@ cython_debug/
 
 #RunScript
 RunProductionServer.sh
+
+#Secret key
+jwt_secret_key

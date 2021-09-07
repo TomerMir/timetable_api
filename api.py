@@ -14,7 +14,8 @@ app = Flask(__name__)
 CORS(app)
 
 # Setup the jwt
-app.config["JWT_SECRET_KEY"] = "g8@)#Eh?AufQv#Z@#(76*gsd,s`,z"
+f = open("jwt_secret_key", 'r')
+app.config["JWT_SECRET_KEY"] = f.read()
 jwt = JWTManager(app)
 
 #Setup the servers loggers
@@ -211,8 +212,8 @@ def delete_user():
         logger.error("Error at delete_user " + e)
         return jsonify(status=False, err="Server error")
 
-        
-if __name__ == "__main__":
+
+def main():
     parser = argparse.ArgumentParser("Timetable api server")
     parser.add_argument("debug", help="""1 for debug mode. 0 or none for production mode""",nargs='?', const=1, type=int, default=0)
     args = parser.parse_args()
@@ -220,4 +221,7 @@ if __name__ == "__main__":
         logger = app.logger
         app.run(host= '0.0.0.0', port=5000, debug=True)
     else:
-        serve(app, host='0.0.0.0', port=5000)
+        serve(app, host='0.0.0.0', port=5000) 
+
+if __name__ == "__main__":
+    main()
