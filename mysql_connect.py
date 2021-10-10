@@ -1,6 +1,12 @@
 import mysql.connector
 import logging
 
+logger = logging
+
+def set_logger(other_logger):
+    global logger
+    logger = other_logger
+
 try:
     mydb = mysql.connector.connect(
         host="localhost",
@@ -8,13 +14,14 @@ try:
         password="MirmoDB2004",
         database="timetable_database"
     )
-    logging.info("Connected to database")
+    logger.info("Connected to database")
     cursor = mydb.cursor()
-    logging.debug("Got cursor")
+    logger.debug("Got cursor")
 
 except:
-    logging.critical("Failed to connect to the database")
+    logger.critical("Failed to connect to the database")
     exit()
+
 
 
 def fetch_from_database(query : str) -> tuple:
@@ -22,10 +29,10 @@ def fetch_from_database(query : str) -> tuple:
         mydb.ping(reconnect=True, attempts=1, delay=0)
         cursor.execute(query)
         result = cursor.fetchall()
-        logging.debug("Succusfuly fetched data from the database")
+        logger.debug("Succusfuly fetched data from the database")
         return result
     except Exception as ex:
-        logging.error("Failed to fetch the database "+str(ex))
+        logger.error("Failed to fetch the database "+str(ex))
         return  None
 
 def fetch_from_database_values(query : str, values : tuple) -> tuple:
@@ -33,10 +40,10 @@ def fetch_from_database_values(query : str, values : tuple) -> tuple:
         mydb.ping(reconnect=True, attempts=1, delay=0)
         cursor.execute(query, values)
         result = cursor.fetchall()
-        logging.debug("Succusfuly fetched data from the database")
+        logger.debug("Succusfuly fetched data from the database")
         return result
     except Exception as ex:
-        logging.error("Failed to fetch the database "+str(ex))
+        logger.error("Failed to fetch the database "+str(ex))
         return  None
 
 def commit_to_database_values(query : str, values : tuple):
@@ -44,20 +51,20 @@ def commit_to_database_values(query : str, values : tuple):
         mydb.ping(reconnect=True, attempts=1, delay=0)
         cursor.execute(query, values)
         mydb.commit()
-        logging.debug("Succusfuly commited to the database")
+        logger.debug("Succusfuly commited to the database")
 
     except Exception as ex:
-        logging.error("Failed to commit to the database "+str(ex))
+        logger.error("Failed to commit to the database "+str(ex))
 
 def commit_to_database(query : str):
     try:
         mydb.ping(reconnect=True, attempts=1, delay=0)
         cursor.execute(query)
         mydb.commit()
-        logging.debug("Succusfuly commited to the database")
+        logger.debug("Succusfuly commited to the database")
 
     except Exception as ex:
-        logging.error("Failed to commit to the database "+str(ex))
+        logger.error("Failed to commit to the database "+str(ex))
 
 if __name__ == "__main__":
     '''

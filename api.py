@@ -218,6 +218,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.debug == 1:
         logger = app.logger
+        set_logger(logger)
         app.run(host= '0.0.0.0', port=5000, debug=True)
     else:
+        set_logger(logger)
         serve(app, host='0.0.0.0', port=5000)
