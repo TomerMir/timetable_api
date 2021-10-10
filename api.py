@@ -217,10 +217,13 @@ def main():
     parser = argparse.ArgumentParser("Timetable api server")
     parser.add_argument("debug", help="""1 for debug mode. 0 or none for production mode""",nargs='?', const=1, type=int, default=0)
     args = parser.parse_args()
+    global logger
     if args.debug == 1:
         logger = app.logger
+        set_logger(logger)
         app.run(host= '0.0.0.0', port=5000, debug=True)
     else:
+        set_logger(logger)
         serve(app, host='0.0.0.0', port=5000) 
 
 if __name__ == "__main__":
