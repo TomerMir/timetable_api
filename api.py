@@ -58,7 +58,7 @@ def login():
         return jsonify(status=True, exp=15, token=access_token)
 
     except Exception as e:
-        logger.error("Error at login " + e)
+        logger.error("Error at login " + str(e))
         return jsonify(status=False, err="Server error")
 
 #Register new user
@@ -86,7 +86,7 @@ def register():
         return jsonify(status=True)
     
     except Exception as e:
-        logger.error("Error at register " + e)
+        logger.error("Error at register " + str(e))
         return jsonify(status=False, err="Server error")
 
 #JWT invalid route
@@ -111,7 +111,7 @@ def get_table():
         del db_result[-1]
         return jsonify(status=True, data=db_result)
     except Exception as e:
-        logger.error("Error at get_table " + e)
+        logger.error("Error at get_table " + str(e))
         return jsonify(status=False, err="Server error")
 
 #Change the timetable
@@ -137,7 +137,7 @@ def edit_table():
         commit_to_database_values(query, values)
         return jsonify(status=True)
     except Exception as e:
-        logger.error("Error at edit_table " + e)
+        logger.error("Error at edit_table " + str(e))
         return jsonify(status=False)
 
 #Verify if user is admin
@@ -159,7 +159,7 @@ def get_users():
         return jsonify(status=True, data=db_result, your_user=username)
 
     except Exception as e:
-        logger.error("Error at get_users " + e)
+        logger.error("Error at get_users " + str(e))
         return jsonify(status=False, err="Server error")
 
 #Change role for specific user
@@ -185,7 +185,7 @@ def change_admin():
         return jsonify(status=True)
 
     except Exception as e:
-        logger.error("Error at change_admin " + e)
+        logger.error("Error at change_admin " + str(e))
         return jsonify(status=False, err="Server error")
 
 
@@ -209,7 +209,7 @@ def delete_user():
         return jsonify(status=True)    
 
     except Exception as e:
-        logger.error("Error at delete_user " + e)
+        logger.error("Error at delete_user " + str(e))
         return jsonify(status=False, err="Server error")
 
 
