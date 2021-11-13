@@ -26,7 +26,7 @@ except:
 
 def fetch_from_database(query : str) -> tuple:
     try:
-        mydb.ping(reconnect=True, attempts=1, delay=0)
+        mydb.ping(reconnect=True, attempts=5, delay=0.1)
         cursor.execute(query)
         result = cursor.fetchall()
         logger.debug("Succusfuly fetched data from the database")
@@ -37,7 +37,7 @@ def fetch_from_database(query : str) -> tuple:
 
 def fetch_from_database_values(query : str, values : tuple) -> tuple:
     try:
-        mydb.ping(reconnect=True, attempts=1, delay=0)
+        mydb.ping(reconnect=True, attempts=5, delay=0.1)
         cursor.execute(query, values)
         result = cursor.fetchall()
         logger.debug("Succusfuly fetched data from the database")
@@ -48,7 +48,7 @@ def fetch_from_database_values(query : str, values : tuple) -> tuple:
 
 def commit_to_database_values(query : str, values : tuple):
     try:
-        mydb.ping(reconnect=True, attempts=1, delay=0)
+        mydb.ping(reconnect=True, attempts=5, delay=0.1)
         cursor.execute(query, values)
         mydb.commit()
         logger.debug("Succusfuly commited to the database")
@@ -58,7 +58,7 @@ def commit_to_database_values(query : str, values : tuple):
 
 def commit_to_database(query : str):
     try:
-        mydb.ping(reconnect=True, attempts=1, delay=0)
+        mydb.ping(reconnect=True, attempts=5, delay=0.1)
         cursor.execute(query)
         mydb.commit()
         logger.debug("Succusfuly commited to the database")
