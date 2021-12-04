@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 import flask
-from mysql_connect import *
+from mysql_connect import Database, set_logger
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager, verify_jwt_in_request
 from flask_cors import CORS
 import logging
@@ -22,6 +22,7 @@ jwt = JWTManager(app)
 werkzeugLogger = logging.getLogger('werkzeug')
 werkzeugLogger.setLevel(logging.ERROR)
 
+app.logger.setLevel("DEBUG")
 logging.root.handlers = []
 logging.basicConfig(filename="timetable_api.log",
                             format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
@@ -35,6 +36,10 @@ console.setFormatter(formatter)
 logging.getLogger('').addHandler(console)
 logger = logging
 
+#Database initialization
+database = Database("localhost", "root", "MirmoDB2004", "timetable_database")
+
+
 #Login
 @app.route("/api/login", methods=["POST"])
 def login():  
@@ -44,7 +49,7 @@ def login():
         stayLoggedIn = request.json.get("stayLoggedIn")
 
         logger.info("New login request from "+username)
-        db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s AND password_hash=%s;", (username, password))
+        db_result = database.fetch_from_database_values("SELECT * FROM users WHERE username=%s AND password_hash=%s;", (username, password))
         if len(db_result) == 0:
             return jsonify(status=False, err="Incorrect username or password")
         admin = db_result[0][-1] == 1
@@ -70,11 +75,11 @@ def register():
 
         logger.info("New register request for "+username) 
         
-        db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (username,))
+        db_result = database.fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (username,))
         if db_result != None and len(db_result) > 0: 
             return jsonify(status=False, err="Username already taken, try another one...")
 
-        commit_to_database_values("""INSERT INTO users (username, password_hash, 1_1, 1_2, 1_3, 1_4, 1_5, 1_6, 1_7, 1_8, 1_9, 1_10, 1_11, 1_12, 2_1, 2_2, 2_3, 2_4,
+        database.commit_to_database_values("""INSERT INTO users (username, password_hash, 1_1, 1_2, 1_3, 1_4, 1_5, 1_6, 1_7, 1_8, 1_9, 1_10, 1_11, 1_12, 2_1, 2_2, 2_3, 2_4,
             2_5, 2_6, 2_7, 2_8, 2_9, 2_10, 2_11, 2_12, 3_1, 3_2, 3_3, 3_4, 3_5, 3_6, 3_7, 3_8, 3_9, 3_10, 3_11, 3_12, 4_1, 4_2, 4_3, 4_4, 4_5, 4_6, 4_7, 4_8, 4_9, 4_10,
             4_11, 4_12, 5_1, 5_2, 5_3, 5_4, 5_5, 5_6, 5_7, 5_8, 5_9, 5_10, 5_11, 5_12, 6_1, 6_2, 6_3, 6_4, 6_5, 6_6, 6_7, 6_8, 6_9, 6_10, 6_11, 6_12) VALUES (%s, %s, %s,
             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
@@ -106,7 +111,7 @@ def get_table():
     try:
         username = get_jwt_identity()
         logger.info("Get table request from "+ username) 
-        db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (username,))
+        db_result = database.fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (username,))
         db_result = list(db_result[0])[3:]
         del db_result[-1]
         return jsonify(status=True, data=db_result)
@@ -134,7 +139,7 @@ def edit_table():
         values = list(values)
         values.append(username)
         values = tuple(values)
-        commit_to_database_values(query, values)
+        database.commit_to_database_values(query, values)
         return jsonify(status=True)
     except Exception as e:
         logger.error("Error at edit_table " + str(e))
@@ -142,7 +147,7 @@ def edit_table():
 
 #Verify if user is admin
 def verify_admin(username):
-    db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (username,))
+    db_result = database.fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (username,))
     return db_result[0][-1] == 1
     
 #Get the users list
@@ -155,7 +160,7 @@ def get_users():
         if not verify_admin(username):
             return jsonify(status=False, err="You are not an admin")
 
-        db_result = fetch_from_database("SELECT username, is_admin FROM users;")
+        db_result = database.fetch_from_database("SELECT username, is_admin FROM users;")
         return jsonify(status=True, data=db_result, your_user=username)
 
     except Exception as e:
@@ -174,13 +179,13 @@ def change_admin():
         logger.info("%s changed %s's role" % (username, user_to_change)) 
         if user_to_change == username:
             return jsonify(status=False, err="You can't change your own role")
-        db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (user_to_change,))
+        db_result = database.fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (user_to_change,))
         if len(db_result) == 0:
             return jsonify(status=False, err="Username does not exist")
         if db_result[0][-1] == 1:
-            commit_to_database_values("UPDATE users SET is_admin=%s WHERE username=%s;", (None, user_to_change))
+            database.commit_to_database_values("UPDATE users SET is_admin=%s WHERE username=%s;", (None, user_to_change))
         else:
-            commit_to_database_values("UPDATE users SET is_admin=%s WHERE username=%s;", (1, user_to_change))
+            database.commit_to_database_values("UPDATE users SET is_admin=%s WHERE username=%s;", (1, user_to_change))
 
         return jsonify(status=True)
 
@@ -201,11 +206,11 @@ def delete_user():
         logger.info("%s deleted %s's account" % (username, user_to_change)) 
         if user_to_change == username:
             return jsonify(status=False, err="You can't delete your own user")
-        db_result = fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (user_to_change,))
+        db_result = database.fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (user_to_change,))
         if len(db_result) == 0:
             return jsonify(status=False, err="Username does not exist")
 
-        commit_to_database_values("DELETE FROM users WHERE username=%s;", (user_to_change,))
+        database.commit_to_database_values("DELETE FROM users WHERE username=%s;", (user_to_change,))
         return jsonify(status=True)    
 
     except Exception as e:
@@ -228,3 +233,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
