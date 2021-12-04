@@ -21,6 +21,7 @@ class Database:
             )
             logger.info("Connected to database")
             self.cursor = self.mydb.cursor()
+            self.cursor.reset()
             logger.debug("Got cursor")
             self.start_ping_thread()
 
