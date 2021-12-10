@@ -12,26 +12,33 @@ def set_logger(other_logger):
 class Database:
 
     def __init__(self, host : str, user : str, password : str, database: str) -> None:
-        try:
-            self.mydb = mysql.connector.connect(
-                host=host,
-                user=user,
-                password=password,
-                database=database
-            )
-            logger.info("Connected to database")
-            self.cursor = self.mydb.cursor(buffered=True)
-            logger.debug("Got cursor")
-            self.start_ping_thread()
-
-        except Exception as ex:
-            logger.critical("Failed to connect to the database" + str(ex))
-            exit()
+        self.host = host
+        self.user = user
+        self.password = password
+        self.database = database
+        self.connect_to_database()
+        self.start_ping_thread()
 
     def start_ping_thread(self):
         self.ping_thread = threading.Thread(target=self.ping)
         self.ping_thread.start()
         logger.debug("Started ping thread")
+
+    def connect_to_database(self):
+        try:
+            self.mydb = mysql.connector.connect(
+                host=self.host,
+                user=self.user,
+                password=self.password,
+                database=self.database
+            )
+            logger.info("Connected to database")
+            self.cursor = self.mydb.cursor(buffered=True)
+            logger.debug("Got cursor")
+    
+        except Exception as ex:
+            logger.critical("Failed to connect to the database" + str(ex))
+            exit()
 
     def ping(self):
         while True:
@@ -39,6 +46,8 @@ class Database:
                 self.cursor.execute("SELECT 1;")
             except Exception as ex:
                 logger.error("Failed to ping database" + str(ex))
+                logger.info("Reconnecting to database...")
+                self.connect_to_database()
             time.sleep(120)
 
     def fetch_from_database(self, query : str) -> tuple:
