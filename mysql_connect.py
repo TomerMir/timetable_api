@@ -33,7 +33,7 @@ class Database:
                 database=self.database
             )
             logger.info("Connected to database")
-            self.cursor = self.mydb.cursor()
+            self.cursor = self.mydb.cursor(buffered=True)
             logger.debug("Got cursor")
     
         except Exception as ex:
