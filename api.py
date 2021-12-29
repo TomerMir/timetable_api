@@ -18,7 +18,7 @@ f = open("jwt_secret_key", 'r')
 app.config["JWT_SECRET_KEY"] = f.read()
 jwt = JWTManager(app)
 
-#Setup the servers loggers
+#Setup the server loggers
 werkzeugLogger = logging.getLogger('werkzeug')
 werkzeugLogger.setLevel(logging.ERROR)
 

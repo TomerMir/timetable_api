@@ -57,6 +57,7 @@ class Database:
             logger.debug("Succusfuly fetched data from the database")
             return result
         except Exception as ex:
+            logger.debug("Query error: "+query)
             logger.error("Failed to fetch the database "+str(ex))
             return  None
 
@@ -67,6 +68,7 @@ class Database:
             logger.debug("Succusfuly fetched data from the database")
             return result
         except Exception as ex:
+            logger.debug("Query error: "+query)
             logger.error("Failed to fetch the database "+str(ex))
             return  None
 
@@ -77,6 +79,7 @@ class Database:
             logger.debug("Succusfuly commited to the database")
 
         except Exception as ex:
+            logger.debug("Query error: "+query)
             logger.error("Failed to commit to the database "+str(ex))
 
     def commit_to_database(self, query : str):
@@ -86,6 +89,7 @@ class Database:
             logger.debug("Succusfuly commited to the database")
 
         except Exception as ex:
+            logger.debug("Query error: "+query)
             logger.error("Failed to commit to the database "+str(ex))
 
 if __name__ == "__main__":
