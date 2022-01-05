@@ -59,6 +59,8 @@ class Database:
         except Exception as ex:
             logger.debug("Query error: "+query)
             logger.error("Failed to fetch the database "+str(ex))
+            logger.info("Reconnecting to database...")
+            self.connect_to_database()
             return  None
 
     def fetch_from_database_values(self, query : str, values : tuple) -> tuple:
@@ -70,6 +72,8 @@ class Database:
         except Exception as ex:
             logger.debug("Query error: "+query)
             logger.error("Failed to fetch the database "+str(ex))
+            logger.info("Reconnecting to database...")
+            self.connect_to_database()
             return  None
 
     def commit_to_database_values(self, query : str, values : tuple):
@@ -81,6 +85,8 @@ class Database:
         except Exception as ex:
             logger.debug("Query error: "+query)
             logger.error("Failed to commit to the database "+str(ex))
+            logger.info("Reconnecting to database...")
+            self.connect_to_database()
 
     def commit_to_database(self, query : str):
         try:
@@ -91,6 +97,8 @@ class Database:
         except Exception as ex:
             logger.debug("Query error: "+query)
             logger.error("Failed to commit to the database "+str(ex))
+            logger.info("Reconnecting to database...")
+            self.connect_to_database()
 
 if __name__ == "__main__":
     database = Database("localhost", "root", "MirmoDB2004", "timetable_database")
