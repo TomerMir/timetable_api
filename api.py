@@ -1,43 +1,65 @@
+from shutil import ExecError
+from turtle import st
 from flask import Flask, jsonify, request
 import flask
-from mysql_connect import Database, set_logger
+from mysql_connect import Database
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager, verify_jwt_in_request
 from flask_cors import CORS
 import logging
-from waitress import serve
 import sys
 import argparse
+import os
 import datetime
 
-#Setup flask app and CORS (Cross-origin resource sharing)
-app = Flask(__name__)
-CORS(app)
+try: 
+    #Setup flask app and CORS (Cross-origin resource sharing)
+    app = Flask(__name__)
+    CORS(app)
 
-# Setup the jwt
-f = open("jwt_secret_key", 'r')
-app.config["JWT_SECRET_KEY"] = f.read()
-jwt = JWTManager(app)
+    #Setup the server loggers
+    werkzeugLogger = logging.getLogger('werkzeug')
+    werkzeugLogger.setLevel(logging.ERROR)
 
-#Setup the server loggers
-werkzeugLogger = logging.getLogger('werkzeug')
-werkzeugLogger.setLevel(logging.ERROR)
+    app.logger.handlers = []
 
-app.logger.setLevel("DEBUG")
-logging.root.handlers = []
-logging.basicConfig(filename="timetable_api.log",
-                            format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                            datefmt='"%Y-%m-%d %H:%M:%S"',
-                            level=logging.INFO)
+    logging.root.handlers = []
+    logging.basicConfig(filename="timetable_api.log",
+                                format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                                datefmt='"%Y-%m-%d %H:%M:%S"',
+                                level=logging.INFO)
 
-console = logging.StreamHandler(sys.stdout)
-console.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
-console.setFormatter(formatter)
-logging.getLogger('').addHandler(console)
-logger = logging
+    console = logging.StreamHandler(sys.stdout)
+    console.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger('').addHandler(console)
+    app.logger.addHandler(console)
+    logger = logging
 
-#Database initialization
-database = Database("localhost", "root", "MirmoDB2004", "timetable_database")
+    # Setup the jwt
+    path = "jwt_secret_key"
+    if os.path.exists(path):
+        with open(path ,'r') as f:
+            app.config["JWT_SECRET_KEY"] = f.read()
+            logger.debug("Succusfully loaded the jwt key")
+
+    else:
+        import random
+        import string
+        key = ''.join(random.choices(string.ascii_letters + string.digits, k=20))
+        with open(path ,'w+') as f:
+            f.write(key)
+        app.config["JWT_SECRET_KEY"] = key
+        logger.debug("Created new jwt key")
+
+    jwt = JWTManager(app)
+
+    #Database initialization
+    database = Database("localhost", "root", "MirmoDB2004", "timetable_database", logger)
+
+except Exception as ex:
+    logging.fatal("Error while setting up the server: "+ str(ex))
+    exit()
 
 
 #Login
@@ -147,8 +169,12 @@ def edit_table():
 
 #Verify if user is admin
 def verify_admin(username):
-    db_result = database.fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (username,))
-    return db_result[0][-1] == 1
+    try:
+        db_result = database.fetch_from_database_values("SELECT * FROM users WHERE username=%s;", (username,))
+        return db_result[0][-1] == 1
+    except Exception as e:
+        logger.error("Error at verify_admin " + str(e))
+        return False
     
 #Get the users list
 @app.route("/api/getusers", methods=["GET"])
@@ -219,17 +245,22 @@ def delete_user():
 
 
 def main():
-    parser = argparse.ArgumentParser("Timetable api server")
-    parser.add_argument("debug", help="""1 for debug mode. 0 or none for production mode""",nargs='?', const=1, type=int, default=0)
-    args = parser.parse_args()
-    global logger
-    if args.debug == 1:
-        logger = app.logger
-        set_logger(logger)
-        app.run(host= '127.0.0.1', port=5000, debug=True)
-    else:
-        set_logger(logger)
-        serve(app, host='127.0.0.1', port=5000) 
+    try:
+        parser = argparse.ArgumentParser("Timetable api server")
+        parser.add_argument("debug", help="""1 for debug mode. 0 or none for production mode""",nargs='?', const=1, type=int, default=0)
+        args = parser.parse_args()
+        global logger
+        if args.debug == 1:
+            logger = app.logger
+            database.set_logger(logger)
+            app.run(host= '127.0.0.1', port=5000, debug=True)
+        else:
+            from waitress import serve
+            serve(app, host='127.0.0.1', port=5000) 
+    except Exception as e:
+        logger.fatal("Error at main " + str(e) + "\nExiting...")
+    finally:
+        exit()
 
 if __name__ == "__main__":
     main()
