@@ -1,5 +1,3 @@
-from shutil import ExecError
-from turtle import st
 from flask import Flask, jsonify, request
 import flask
 from mysql_connect import Database

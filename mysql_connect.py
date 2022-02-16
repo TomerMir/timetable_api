@@ -101,6 +101,3 @@ class Database:
 
 if __name__ == "__main__":
     database = Database("localhost", "root", "MirmoDB2004", "timetable_database")
-    
-
-            
