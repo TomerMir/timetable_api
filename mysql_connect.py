@@ -3,8 +3,10 @@ import logging
 import threading
 import time
 
+#The database class
 class Database:
-
+    
+    #Constructor that saves all of the variables and starts the pinging thread.
     def __init__(self, host : str, user : str, password : str, database: str, logger : logging.Logger) -> None:
         self.host = host
         self.user = user
@@ -14,14 +16,17 @@ class Database:
         self.connect_to_database()
         self.start_ping_thread()
 
+    #Set the class logger
     def set_logger(self, logger : logging.Logger):
         self.logger = logger
 
+    #Starts the pinging thread
     def start_ping_thread(self):
         self.ping_thread = threading.Thread(target=self.ping)
         self.ping_thread.start()
         self.logger.debug("Started ping thread")
     
+    #Connects to the database
     def connect_to_database(self):
         try:
             self.mydb = mysql.connector.connect(
@@ -38,6 +43,7 @@ class Database:
             self.logger.fatal("Failed to connect to the database" + str(ex))
             exit()
 
+    #Pings the database every 2 minutes forever
     def ping(self):
         while True:
             try:
@@ -48,7 +54,8 @@ class Database:
                 self.logger.info("Reconnecting to database...")
                 self.connect_to_database()
             time.sleep(120)
-
+            
+    #Get data from the database - execute the query
     def fetch_from_database(self, query : str) -> tuple:
         try:
             self.cursor.execute(query)
@@ -61,7 +68,8 @@ class Database:
             self.logger.info("Reconnecting to database...")
             self.connect_to_database()
             return  None
-
+    
+    #Get data from the database - execute the query with values tuple
     def fetch_from_database_values(self, query : str, values : tuple) -> tuple:
         try:
             self.cursor.execute(query, values)
@@ -75,6 +83,7 @@ class Database:
             self.connect_to_database()
             return  None
 
+    #Commit to the database - execute the query with values tuple
     def commit_to_database_values(self, query : str, values : tuple):
         try:
             self.cursor.execute(query, values)
@@ -86,7 +95,8 @@ class Database:
             self.logger.error("Failed to commit to the database "+str(ex))
             self.logger.info("Reconnecting to database...")
             self.connect_to_database()
-
+    
+    #Commit to the database - execute the query
     def commit_to_database(self, query : str):
         try:
             self.cursor.execute(query)
@@ -98,6 +108,3 @@ class Database:
             self.logger.error("Failed to commit to the database "+str(ex))
             self.logger.info("Reconnecting to database...")
             self.connect_to_database()
-
-if __name__ == "__main__":
-    database = Database("localhost", "root", "MirmoDB2004", "timetable_database")
